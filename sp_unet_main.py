@@ -9,10 +9,10 @@ import math, time
 import argparse
 
 parser = argparse.ArgumentParser(description='Arg Parse')
-parser.add_argument('debug', type=bool, default=True)
-parser.add_argument('m', type=int, default=4)
-parser.add_argument('grid', type=int, default=128)
-parser.add_argument('reps', type=int, default=1)
+parser.add_argument('--debug', type=bool, default=True)
+parser.add_argument('--m', type=int, default=4)
+parser.add_argument('--grid', type=int, default=128)
+parser.add_argument('--reps', type=int, default=1)
 args = parser.parse_args()
 
 data.init(-1,24,24*8,16)
