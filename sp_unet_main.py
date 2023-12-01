@@ -51,7 +51,7 @@ class UpConv(nn.Module):
         super(UpConv, self, ).__init__()
         self.conv = nn.Sequential(
             nn.BatchNorm3d(in_features),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.ConvTranspose3d(in_features, out_features, 4, 2, 1),
         )
     
@@ -68,7 +68,6 @@ class BaseUNET(nn.Module):
 
         self.start_conv = ConvBlock(1, nPlanes[0], 0)
 
-        nn.ModuleList
         self.down_conv_blocks = nn.ModuleList()
         for n in nPlanes[:-1]:
             self.down_conv_blocks.append(ConvBlock(n, n, reps))
@@ -93,15 +92,18 @@ class BaseUNET(nn.Module):
             nn.ReLU(inplace=True),
         )
 
+        # takes [conv * nPlane[0], skip * nPlane[0], point_features * nPlane[0]]
         self.linear_per_whole = nn.Sequential(
-            nn.Linear(nPlanes[0]*2 + 3, nPlanes[0]),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(nPlanes[0], num_classes),
+            nn.Linear(nPlanes[0]*3, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, num_classes),
             nn.ReLU(inplace=True),
             nn.Softmax(dim=-1),
         )
 
-        self.debug = True
+        self.debug = False
 
     def forward(self, x):
         '''
@@ -118,12 +120,12 @@ class BaseUNET(nn.Module):
         with torch.no_grad():
             x_pos = x[0].cuda()
             x_batch = x[1].cuda()
-            print(x_pos.dtype)
             x_pos = x_pos.to(torch.float32)
+            if self.debug: print(torch.min(x_pos, dim=0).values)
+            if self.debug: print(torch.max(x_pos, dim=0).values)
             x_pos = ((x_pos + 1.0) * (self.n_grid / 2))
-            oob = torch.any(torch.logical_or(x_pos >= self.n_grid-1, x_pos < 0))
+            oob = torch.any(torch.logical_or(x_pos >= self.n_grid, x_pos < 0))
             if oob: print("OOB")
-            else: print("GOOD")
             x_inds = torch.floor(x_pos).clamp(min=0, max=self.n_grid-1)
             x_pos -= x_inds
             x_inds = torch.cat([x_inds.to(torch.long), x_batch], dim=-1)
@@ -131,8 +133,6 @@ class BaseUNET(nn.Module):
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
             grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
         
-        print(grid.dtype, x_inds.dtype, x_pos.dtype)
-
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
         if self.debug: print("After start:", x.shape)
@@ -167,9 +167,10 @@ class BaseUNET(nn.Module):
         x_per_pixel = x[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]]
         point_features = self.linear_per_point(x_pos[:])
         x_per_pixel = torch.cat([x_per_pixel, point_features], dim=-1)
-        print("WINNING", x_per_pixel.shape)
+        x_decision = self.linear_per_whole(x_per_pixel)
+        if self.debug: print("OUTPUT", x_decision.shape)
 
-        return self.linear_per_whole(x_per_pixel)
+        return x_decision
 
 dimension = 3
 reps = 1 #Conv block repetition factor
@@ -288,7 +289,7 @@ for epoch in range(p['epoch'], p['n_epochs'] + 1):
         optimizer.step()        
     r = iou(stats)
     print('train epoch',epoch,1,'iou=', r['iou'], 'MegaMulAdd=','time=',time.time() - start,'s')
-
+    exit()
     if p['check_point']:
         torch.save(epoch, 'epoch.pth')
         torch.save(model.state_dict(),'model.pth')

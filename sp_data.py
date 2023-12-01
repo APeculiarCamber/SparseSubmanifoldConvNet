@@ -10,6 +10,8 @@ import glob, math, os
 import scipy, scipy.ndimage
 import sys, time
 import os
+import time
+
 if not os.path.exists('train_val/'):
     print('Downloading data ...')
     os.system('bash download_and_split_data.sh')
@@ -65,6 +67,7 @@ def train():
 
     print(len(d))
     def merge(tbl):
+        st_time = time.time()
         xl_=[]
         xf_=[]
         y_=[]
@@ -82,10 +85,9 @@ def train():
             #xl=np.dot(xl,m)
             #xl+=np_random.uniform(-1,1,(1,3)).astype('float32')
             #xl=np.floor(resolution*(4+xl)).astype('int64') # this does appear to be an indexing
-            xf=np.ones((xl.shape[0],1), dtype='int64') * idx
-            print("Batch INDEX:", idx)
+            #xf=np.ones((xl.shape[0],1), dtype='int64') * idx
             xl_.append(xl.astype('float32'))
-            xf_.append(xf)
+            #xf_.append(xf)
             y_.append(y)
             categ_.append(np.ones(y.shape[0],dtype='int64')*categ)
             classOffset_.append(classOffset)
@@ -95,7 +97,8 @@ def train():
             mask_.append(mask)
             nPoints_.append(y.shape[0])
         # xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
-        xl_=[ x for x in enumerate(xl_) ]
+        xl_=[ x for x in xl_ ]
+        xf_=[ np.ones((xll.shape[0],1), dtype='int64') * idx for idx,xll in enumerate(xl_) ]
         return {'x':  [torch.from_numpy(np.vstack(xl_)),torch.from_numpy(np.vstack(xf_))],
                 'y':           torch.from_numpy(np.hstack(y_)),
                 'categ':       torch.from_numpy(np.hstack(categ_)),
@@ -124,7 +127,7 @@ def valid():
     print(len(d))
     def merge(tbl):
         xl_=[]
-        xf_=[]
+        #xf_=[]
         y_=[]
         categ_=[]
         mask_=[]
@@ -140,9 +143,9 @@ def valid():
             #xl+=np_random.uniform(-1,1,(1,3)).astype('float32')
             #xl=np.floor(resolution*(4+xl)).astype('int64')
             xl_.append(xl.astype('float32'))
-            xf=np.ones((xl.shape[0],1), dtype='int64') * idx
-            print("Batch IDX:", idx)
-            xf_.append(xf)
+            #xf=np.ones((xl.shape[0],1), dtype='int64') * idx
+            #print("Batch IDX:", idx)
+            #xf_.append(xf)
             y_.append(y)
             categ_.append(np.ones(y.shape[0],dtype='int64')*categ)
             classOffset_.append(classOffset)
@@ -152,7 +155,8 @@ def valid():
             mask_.append(mask)
             nPoints_.append(y.shape[0])
         # xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
-        xl_=[ x for x in enumerate(xl_) ]
+        xl_=[ x for x in xl_ ]
+        xf_=[ np.ones((xll.shape[0],1), dtype='int64') * idx for idx,xll in enumerate(xl_) ]
         return {'x':  [torch.from_numpy(np.vstack(xl_)),torch.from_numpy(np.vstack(xf_))],
                 'y':           torch.from_numpy(np.hstack(y_)),
                 'categ':       torch.from_numpy(np.hstack(categ_)),
