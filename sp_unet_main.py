@@ -88,8 +88,12 @@ class BaseUNET(nn.Module):
         for down,up in zip(reversed(nPlanes[1:-1]), reversed(nPlanes[:-2])):
             self.upsampling_convs.append(UpConv(down, up))
 
+        self.linear_per_point = nn.Sequential(
+            nn.Linear(3, nPlanes[0]),
+            nn.ReLU(inplace=True),
+        )
 
-        self.linear_per_pixel = nn.Sequential(
+        self.linear_per_whole = nn.Sequential(
             nn.Linear(nPlanes[0]*2 + 3, nPlanes[0]),
             nn.LeakyReLU(inplace=True),
             nn.Linear(nPlanes[0], num_classes),
@@ -156,14 +160,14 @@ class BaseUNET(nn.Module):
         if self.debug: print(f"After CONVs", x.shape)
 
         x_per_pixel = x[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]]
-        x_per_pixel = torch.cat([x_per_pixel, x_pos], dim=-1)
+        x_per_pixel = torch.cat([x_per_pixel, self.linear_per_point(x_pos)], dim=-1)
         print("WINNING", x_per_pixel.shape)
 
-        return self.linear_per_pixel(x_per_pixel)
+        return self.linear_per_whole(x_per_pixel)
 
 dimension = 3
 reps = 1 #Conv block repetition factor
-m = 16 #Unet number of features
+m = 8 #Unet number of features
 nPlanes = [m, 2*m, 3*m, 4*m, 5*m] # UNet number of features per level
 # each convolutions preceded by batch normalization and a ReLU non-linearity
 nGrid = 64
