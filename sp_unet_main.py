@@ -117,6 +117,8 @@ class BaseUNET(nn.Module):
 
         with torch.no_grad():
             x_pos = x[0].cuda()
+            print(x_pos.dtype)
+            x_pos = x_pos.to(torch.float32)
             x_pos = ((x_pos + 1.0) * (self.n_grid / 2))
             oob = torch.any(torch.logical_and(x_pos >= self.n_grid-1, x_pos < 0))
             if oob: print("OOB")
@@ -129,7 +131,7 @@ class BaseUNET(nn.Module):
             grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
         
         print(grid.dtype, x_inds.dtype, x_pos.dtype)
-        
+
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
         if self.debug: print("After start:", x.shape)

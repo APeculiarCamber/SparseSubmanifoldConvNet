@@ -137,7 +137,7 @@ def valid():
             #xl=np.dot(xl,m)
             #xl+=np_random.uniform(-1,1,(1,3)).astype('float32')
             #xl=np.floor(resolution*(4+xl)).astype('int64')
-            xl_.append(xl)
+            xl_.append(xl.astype('float32'))
             xf=np.ones((xl.shape[0],1)).astype('float32')
             xf_.append(xf)
             y_.append(y)
