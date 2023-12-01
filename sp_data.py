@@ -9,12 +9,14 @@ import torch, torch.utils.data
 import glob, math, os
 import scipy, scipy.ndimage
 import sys, time
+import os
 if not os.path.exists('train_val/'):
     print('Downloading data ...')
     os.system('bash download_and_split_data.sh')
 
 print("DONE.")
-time.sleep(1)
+max_loaders = os.cpu_count() 
+print(f"Working with {max_loaders}")
 
 categories=["02691156", "02773838", "02954340", "02958343",
        "03001627", "03261776", "03467517", "03624134",
@@ -52,13 +54,13 @@ def train():
             for x in torch.utils.data.DataLoader(
                 glob.glob('train_val/'+categories[c]+'/*.pts.train'),
                 collate_fn=lambda x: load(x, c, classOffsets[c],nClasses[c]),
-                num_workers=12):
+                num_workers=max_loaders):
                 d.append(x)
     else:
         for x in torch.utils.data.DataLoader(
             glob.glob('train_val/'+categories[categ]+'/*.pts.train'),
             collate_fn=lambda x: load(x, categ, 0, nClasses[categ]),
-            num_workers=12):
+            num_workers=max_loaders):
             d.append(x)
 
     print(len(d))
@@ -100,7 +102,7 @@ def train():
                 'mask':        torch.from_numpy(np.vstack(mask_)),
                 'xf':          [x[0] for x in tbl],
                 'nPoints':     nPoints_}
-    return torch.utils.data.DataLoader(d,batch_size=batchSize, collate_fn=merge, num_workers=10, shuffle=True)
+    return torch.utils.data.DataLoader(d,batch_size=batchSize, collate_fn=merge, num_workers=max_loaders, shuffle=True)
 
 def valid():
     d=[]
@@ -109,13 +111,13 @@ def valid():
             for x in torch.utils.data.DataLoader(
                 glob.glob('train_val/'+categories[c]+'/*.pts.valid'),
                 collate_fn=lambda x: load(x, c, classOffsets[c],nClasses[c]),
-                num_workers=12):
+                num_workers=max_loaders):
                 d.append(x)
     else:
         for x in torch.utils.data.DataLoader(
             glob.glob('train_val/'+categories[categ]+'/*.pts.valid'),
             collate_fn=lambda x: load(x, categ, 0, nClasses[categ]),
-            num_workers=12):
+            num_workers=max_loaders):
             d.append(x)
     print(len(d))
     def merge(tbl):
@@ -155,4 +157,4 @@ def valid():
                 'mask': torch.from_numpy(np.vstack(mask_)),
                 'xf':          [x[0] for x in tbl],
                 'nPoints':     nPoints_}
-    return torch.utils.data.DataLoader(d,batch_size=batchSize, collate_fn=merge, num_workers=10, shuffle=True)
+    return torch.utils.data.DataLoader(d,batch_size=batchSize, collate_fn=merge, num_workers=max_loaders, shuffle=True)
