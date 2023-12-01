@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Datasets
+*.zip
+test/
+train_val/
+deepgen-code/
+
 # C extensions
 *.so
 
