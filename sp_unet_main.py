@@ -117,6 +117,7 @@ class BaseUNET(nn.Module):
         x_inds = x_inds.to(torch.long)
         '''
 
+        # PREPROCESSING
         with torch.no_grad():
             x_pos = x[0].cuda()
             x_batch = x[1].cuda()
@@ -132,7 +133,7 @@ class BaseUNET(nn.Module):
             x_inds_uni, x_inds_count = x_inds.unique(return_counts=True, dim=0)
 
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
-            grid[x_inds_uni[:,3], 0, x_inds_uni[:,0], x_inds_uni[:,1], x_inds_uni[:,2]] = x_inds_count.squeeze()
+            grid[x_inds_uni[:,3], 0, x_inds_uni[:,0], x_inds_uni[:,1], x_inds_uni[:,2]] = x_inds_count.to(torch.float).squeeze()
         
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
