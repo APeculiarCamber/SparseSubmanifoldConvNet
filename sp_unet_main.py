@@ -81,7 +81,6 @@ class BaseUNET(nn.Module):
         for up,down in zip(nPlanes[:-1], nPlanes[1:]):
             self.downsampling_convs.append(DownConv(up, down))
 
-
         self.mid_conv_block = ConvBlock(nPlanes[-1], nPlanes[-1], reps)
         self.mid_up_block = UpConv(nPlanes[-1], nPlanes[-2])
 
@@ -296,7 +295,7 @@ for epoch in range(p['epoch'], p['n_epochs'] + 1):
         loss = criterion.forward(predictions,batch['y'])
         store(stats,batch,predictions,loss)
         loss.backward()
-        optimizer.step()        
+        optimizer.step()
     r = iou(stats)
     print('train epoch',epoch,1,'iou=', r['iou'], 'MegaMulAdd=','time=',time.time() - start,'s')
     exit()
