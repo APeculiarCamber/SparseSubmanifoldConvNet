@@ -93,7 +93,7 @@ def train():
             mask[:,classOffset:classOffset+nClasses]=1
             mask_.append(mask)
             nPoints_.append(y.shape[0])
-        xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='int64')]) for idx,x in enumerate(xl_)]
+        xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
         return {'x':  [torch.from_numpy(np.vstack(xl_)),torch.from_numpy(np.vstack(xf_))],
                 'y':           torch.from_numpy(np.hstack(y_)),
                 'categ':       torch.from_numpy(np.hstack(categ_)),
@@ -148,7 +148,7 @@ def valid():
             mask[:,classOffset:classOffset+nClasses]=1
             mask_.append(mask)
             nPoints_.append(y.shape[0])
-        xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='int64')]) for idx,x in enumerate(xl_)]
+        xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
         return {'x':  [torch.from_numpy(np.vstack(xl_)),torch.from_numpy(np.vstack(xf_))],
                 'y':           torch.from_numpy(np.hstack(y_)),
                 'categ':       torch.from_numpy(np.hstack(categ_)),

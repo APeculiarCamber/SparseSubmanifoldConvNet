@@ -119,14 +119,16 @@ class BaseUNET(nn.Module):
             x_pos = x[0].cuda()
             print(x_pos.dtype)
             x_pos = x_pos.to(torch.float32)
-            x_pos = ((x_pos + 1.0) * (self.n_grid / 2))
-            oob = torch.any(torch.logical_and(x_pos >= self.n_grid-1, x_pos < 0))
+            x_pos[:, :3] = ((x_pos[:,:3] + 1.0) * (self.n_grid / 2))
+            oob = torch.any(torch.logical_or(x_pos >= self.n_grid-1, x_pos < 0))
             if oob: print("OOB")
             else: print("GOOD")
-            x_inds = torch.floor(x_pos).clamp(min=0, max=self.n_grid-1)
-            x_pos -= x_inds
+            x_inds = torch.empty_like(x_pos, dtype=torch.float32, device=x_pos.device)
+            x_inds[:,:3] = torch.floor(x_pos[:,:3]).clamp(min=0, max=self.n_grid-1)
+            x_inds[:,3] = torch.floor(x_pos[:,3])
+            x_pos[:,:3] -= x_inds[:,:3]
             x_inds = x_inds.to(torch.long)
-        
+            
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
             grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
         
