@@ -125,9 +125,11 @@ class BaseUNET(nn.Module):
             x_pos -= x_inds
             x_inds = x_inds.to(torch.long)
         
-        grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
-        grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
-
+            grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
+            grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
+        
+        print(grid.dtype, x_inds.dtype, x_pos.dtype)
+        
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
         if self.debug: print("After start:", x.shape)
