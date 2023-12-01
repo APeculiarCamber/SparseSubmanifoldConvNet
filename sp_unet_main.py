@@ -129,9 +129,10 @@ class BaseUNET(nn.Module):
             x_inds = torch.floor(x_pos).clamp(min=0, max=self.n_grid-1)
             x_pos -= x_inds
             x_inds = torch.cat([x_inds.to(torch.long), x_batch], dim=-1)
-
+            x_inds_uni, x_inds_count = x_inds.unique(return_counts=True, dim=0)
+            
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
-            grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
+            grid[x_inds_uni[:,3], :, x_inds_uni[:,0], x_inds_uni[:,1], x_inds_uni[:,2]] = x_inds_count
         
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
@@ -174,10 +175,10 @@ class BaseUNET(nn.Module):
 
 dimension = 3
 reps = 1 #Conv block repetition factor
-m = 8 #Unet number of features
+m = 4 #Unet number of features
 nPlanes = [m, 2*m, 3*m, 4*m, 5*m] # UNet number of features per level
 # each convolutions preceded by batch normalization and a ReLU non-linearity
-nGrid = 64
+nGrid = 128
 model=BaseUNET(reps, nPlanes, nGrid, data.nClassesTotal)
 print(model)
 trainIterator=data.train()
