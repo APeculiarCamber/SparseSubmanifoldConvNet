@@ -83,7 +83,7 @@ def train():
             #xl+=np_random.uniform(-1,1,(1,3)).astype('float32')
             #xl=np.floor(resolution*(4+xl)).astype('int64') # this does appear to be an indexing
             xf=np.ones((xl.shape[0],1)).astype('float32')
-            xl_.append(xl)
+            xl_.append(xl.astype('float32'))
             xf_.append(xf)
             y_.append(y)
             categ_.append(np.ones(y.shape[0],dtype='int64')*categ)
