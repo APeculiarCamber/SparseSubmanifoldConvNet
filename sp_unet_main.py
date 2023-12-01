@@ -6,8 +6,14 @@ import os
 import numpy as np
 import sys
 import math, time
+import argparse
 
-
+parser = argparse.ArgumentParser(description='Arg Parse')
+parser.add_argument('debug', type=bool, default=True)
+parser.add_argument('m', type=int, default=4)
+parser.add_argument('grid', type=int, default=128)
+parser.add_argument('reps', type=int, default=1)
+args = parser.parse_args()
 
 data.init(-1,24,24*8,16)
 
@@ -60,7 +66,7 @@ class UpConv(nn.Module):
 
 
 class BaseUNET(nn.Module):
-    def __init__(self, reps, nPlanes, n_grid, num_classes, downsampling=2):
+    def __init__(self, reps, nPlanes, n_grid, num_classes, downsampling=2, debug=True):
         super(BaseUNET, self, ).__init__()
 
         self.num_classes = num_classes
@@ -103,7 +109,7 @@ class BaseUNET(nn.Module):
             nn.Softmax(dim=-1),
         )
 
-        self.debug = False
+        self.debug = debug
 
     def forward(self, x):
         '''
@@ -134,6 +140,7 @@ class BaseUNET(nn.Module):
 
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
             grid[x_inds_uni[:,3], 0, x_inds_uni[:,0], x_inds_uni[:,1], x_inds_uni[:,2]] = x_inds_count.to(torch.float).squeeze()
+            del x_inds_uni, x_batch
         
         if self.debug: print("Before start:", grid.shape)
         x = self.start_conv(grid)
@@ -175,12 +182,13 @@ class BaseUNET(nn.Module):
         return x_decision
 
 dimension = 3
-reps = 1 #Conv block repetition factor
-m = 16 #Unet number of features
+reps = args.reps #Conv block repetition factor
+debug = args.debug
+m = args.m
+grid = args.grid
 nPlanes = [m, 2*m, 3*m, 4*m, 5*m] # UNet number of features per level
 # each convolutions preceded by batch normalization and a ReLU non-linearity
-nGrid = 128
-model=BaseUNET(reps, nPlanes, nGrid, data.nClassesTotal)
+model=BaseUNET(reps, nPlanes, grid, data.nClassesTotal, debug=debug)
 print(model)
 trainIterator=data.train()
 validIterator=data.valid()
