@@ -117,18 +117,17 @@ class BaseUNET(nn.Module):
 
         with torch.no_grad():
             x_pos = x[0].cuda()
+            x_batch = x[1].cuda()
             print(x_pos.dtype)
             x_pos = x_pos.to(torch.float32)
-            x_pos[:, :3] = ((x_pos[:,:3] + 1.0) * (self.n_grid / 2))
+            x_pos = ((x_pos + 1.0) * (self.n_grid / 2))
             oob = torch.any(torch.logical_or(x_pos >= self.n_grid-1, x_pos < 0))
             if oob: print("OOB")
             else: print("GOOD")
-            x_inds = torch.empty_like(x_pos, dtype=torch.float32, device=x_pos.device)
-            x_inds[:,:3] = torch.floor(x_pos[:,:3]).clamp(min=0, max=self.n_grid-1)
-            x_inds[:,3] = torch.floor(x_pos[:,3])
-            x_pos[:,:3] -= x_inds[:,:3]
-            x_inds = x_inds.to(torch.long)
-            
+            x_inds = torch.floor(x_pos).clamp(min=0, max=self.n_grid-1)
+            x_pos -= x_inds
+            x_inds = torch.cat([x_inds.to(torch.long), x_batch], dim=-1)
+
             grid = torch.zeros(x_inds[-1,3] + 1, 1, self.n_grid, self.n_grid, self.n_grid, device=x_inds.device)
             grid[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]] = 1.0
         
@@ -166,7 +165,8 @@ class BaseUNET(nn.Module):
         if self.debug: print(f"After CONVs", x.shape)
 
         x_per_pixel = x[x_inds[:,3], :, x_inds[:,0], x_inds[:,1], x_inds[:,2]]
-        x_per_pixel = torch.cat([x_per_pixel, self.linear_per_point(x_pos)], dim=-1)
+        point_features = self.linear_per_point(x_pos[:])
+        x_per_pixel = torch.cat([x_per_pixel, point_features], dim=-1)
         print("WINNING", x_per_pixel.shape)
 
         return self.linear_per_whole(x_per_pixel)
@@ -277,7 +277,8 @@ for epoch in range(p['epoch'], p['n_epochs'] + 1):
     start = time.time()
     for batch in trainIterator:
         optimizer.zero_grad()
-        batch['x'][1]=batch['x'][1].type(dtype)
+        batch['x'][0]=batch['x'][0].type(dtype)
+        batch['x'][1]=batch['x'][1].type(dtypei)
         batch['y']=batch['y'].type(dtypei)
         batch['mask']=batch['mask'].type(dtype)
         predictions=model(batch['x'])

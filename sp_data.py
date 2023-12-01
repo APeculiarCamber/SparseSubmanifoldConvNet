@@ -82,7 +82,8 @@ def train():
             #xl=np.dot(xl,m)
             #xl+=np_random.uniform(-1,1,(1,3)).astype('float32')
             #xl=np.floor(resolution*(4+xl)).astype('int64') # this does appear to be an indexing
-            xf=np.ones((xl.shape[0],1)).astype('float32')
+            xf=np.ones((xl.shape[0],1), dtype='int64') * idx
+            print("Batch INDEX:", idx)
             xl_.append(xl.astype('float32'))
             xf_.append(xf)
             y_.append(y)
@@ -93,7 +94,8 @@ def train():
             mask[:,classOffset:classOffset+nClasses]=1
             mask_.append(mask)
             nPoints_.append(y.shape[0])
-        xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
+        # xl_=[np.hstack([x,idx*np.ones((x.shape[0],1),dtype='float32')]) for idx,x in enumerate(xl_)]
+        xl_=[ x for x in enumerate(xl_) ]
         return {'x':  [torch.from_numpy(np.vstack(xl_)),torch.from_numpy(np.vstack(xf_))],
                 'y':           torch.from_numpy(np.hstack(y_)),
                 'categ':       torch.from_numpy(np.hstack(categ_)),
