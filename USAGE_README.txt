@@ -8,6 +8,7 @@ ModelNet10 Dataset:
     Or download from Google Drive and extract (TODO: LINK).
     Ensure that Model10 is in the deepgen-code directory.
     pip install binvox
+    	- if binvox causes an error from np.bool, replace all instances of np.bool with bool in binvox.py
 
 Compiling CUDA (Standard deepgen-code use)
     Make a copy of kernel.cu
